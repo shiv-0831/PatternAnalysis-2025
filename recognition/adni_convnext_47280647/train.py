@@ -2,10 +2,9 @@ import argparse, os, json, random
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
-import matplotlib.pyplot as plt
 from modules import build_model, count_params
 from dataset import build_loaders
+import matplotlib.pyplot as plt
 
 def set_seed(seed: int = 42):
     random.seed(seed); np.random.seed(seed); torch.manual_seed(seed)
@@ -32,12 +31,25 @@ def plot_curves(history, save_dir):
 
 def main():
     ap = argparse.ArgumentParser()
+    # core
+    ap.add_argument("--dataset", type=str, default="random", choices=["random","adni"])
     ap.add_argument("--epochs", type=int, default=3)
     ap.add_argument("--batch_size", type=int, default=16)
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--head_dropout", type=float, default=0.0)
-    ap.add_argument("--save_dir", type=str, default="results/min1")
+    ap.add_argument("--save_dir", type=str, default="results/run1")
+    # data (ADNI)
+    ap.add_argument("--data_root", type=str, default=None)
+    ap.add_argument("--labels_csv", type=str, default=None)
+    ap.add_argument("--num_workers", type=int, default=4)
+    ap.add_argument("--plane", type=str, default="axial")
+    ap.add_argument("--slice_mode", type=str, default="center_k")
+    ap.add_argument("--center_k", type=int, default=32)
+    ap.add_argument("--step_s", type=int, default=2)
+    ap.add_argument("--val_ratio", type=float, default=0.1)
+    ap.add_argument("--test_ratio", type=float, default=0.1)
+    ap.add_argument("--augment", action="store_true")
     args = ap.parse_args()
 
     set_seed(args.seed)
@@ -46,7 +58,15 @@ def main():
     with open(os.path.join(args.save_dir, "config.json"), "w") as f:
         json.dump(vars(args), f, indent=2)
 
-    train_loader, val_loader = build_loaders(batch_size=args.batch_size, seed=args.seed)
+    train_loader, val_loader, _ = build_loaders(
+        dataset=args.dataset,
+        data_root=args.data_root, labels_csv=args.labels_csv,
+        plane=args.plane, slice_mode=args.slice_mode,
+        center_k=args.center_k, step_s=args.step_s,
+        resize_hw=(224,224), val_ratio=args.val_ratio, test_ratio=args.test_ratio,
+        seed=args.seed, batch_size=args.batch_size, num_workers=args.num_workers,
+        augment=args.augment
+    )
 
     model = build_model(in_chans=1, num_classes=2, head_dropout=args.head_dropout).to(device)
     print(f"Model params: {count_params(model):,}")
@@ -57,10 +77,11 @@ def main():
     history = {"train_loss": [], "val_loss": [], "train_acc": [], "val_acc": []}
 
     for epoch in range(1, args.epochs + 1):
-        # train
+        # --- train ---
         model.train()
-        tr_loss, tr_acc, n_tr = 0.0, 0.0, 0
-        for x, y in train_loader:
+        tr_loss = tr_acc = n_tr = 0.0
+        for batch in train_loader:
+            x, y = (batch[0], batch[1]) if isinstance(batch, (list, tuple)) else batch
             x, y = x.to(device), y.to(device)
             out = model(x)["logits"]
             loss = criterion(out, y)
@@ -70,11 +91,12 @@ def main():
             tr_acc  += accuracy_from_logits(out, y) * bs
             n_tr    += bs
 
-        # val
+        # --- val ---
         model.eval()
-        va_loss, va_acc, n_va = 0.0, 0.0, 0
+        va_loss = va_acc = n_va = 0.0
         with torch.no_grad():
-            for x, y in val_loader:
+            for batch in val_loader:
+                x, y = (batch[0], batch[1]) if isinstance(batch, (list, tuple)) else batch
                 x, y = x.to(device), y.to(device)
                 out = model(x)["logits"]
                 loss = criterion(out, y)
