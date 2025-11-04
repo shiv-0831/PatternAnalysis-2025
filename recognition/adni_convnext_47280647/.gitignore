@@ -13,3 +13,4 @@ checkpoints/
 # data (never commit datasets)
 data/
 datasets/
+ADNI/
