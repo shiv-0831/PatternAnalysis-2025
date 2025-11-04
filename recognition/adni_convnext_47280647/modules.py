@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class TinyCNN(nn.Module):
-    """Minimal 2D CNN for binary classification on 1×224×224 inputs."""
+    """Minimal 2D CNN for binary classification on 1x224x224 inputs."""
     def __init__(self, in_chans: int = 1, num_classes: int = 2, head_dropout: float = 0.0):
         super().__init__()
         self.features = nn.Sequential(
