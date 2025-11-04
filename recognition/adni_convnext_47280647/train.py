@@ -1,4 +1,3 @@
-# train.py
 import argparse, os, json, random
 import numpy as np
 import torch
