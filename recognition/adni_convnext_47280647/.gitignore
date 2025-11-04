@@ -1,4 +1,15 @@
+# python
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# training artifacts
 results/
 checkpoints/
 *.pt
 *.pth
+
+# data (never commit datasets)
+data/
+datasets/
