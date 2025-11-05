@@ -66,6 +66,38 @@ def _list_images_under(root: str, class_map: Dict[str,int]) -> List[Tuple[str,in
                     items.append((p, label))
     return items
 
+def _extract_subject_id(path: str) -> str:
+    """Heuristic subject ID from path: prefer folder just under AD/ or NC/; fallback to filename stem prefix before '_'"""
+    cls_names = {"AD", "NC"}
+    parts = os.path.normpath(path).split(os.sep)
+    for i, part in enumerate(parts):
+        if part in cls_names:
+            if i + 1 < len(parts) - 1:
+                return parts[i + 1]
+            break
+    stem = os.path.splitext(os.path.basename(path))[0]
+    return stem.split("_")[0]
+
+def _split_items_by_subject(items: List[Tuple[str,int]], val_ratio: float, seed: int):
+    from collections import defaultdict
+    subj_to_items: Dict[str, List[Tuple[str,int]]] = defaultdict(list)
+    for p, y in items:
+        s = _extract_subject_id(p)
+        subj_to_items[s].append((p, y))
+    subjects = list(subj_to_items.keys())
+    rng = random.Random(seed)
+    rng.shuffle(subjects)
+    n_val = int(round(len(subjects) * val_ratio))
+    val_subjects = set(subjects[:n_val])
+    train_subjects = set(subjects[n_val:])
+    tr_items: List[Tuple[str,int]] = []
+    va_items: List[Tuple[str,int]] = []
+    for s in train_subjects:
+        tr_items.extend(subj_to_items[s])
+    for s in val_subjects:
+        va_items.extend(subj_to_items[s])
+    return tr_items, va_items
+
 class ADNIImageDataset(Dataset):
     """Each image file is one sample -> returns (x, y)."""
     def __init__(self, items: List[Tuple[str,int]], args: ADNIArgs, split: str):
@@ -90,7 +122,8 @@ class ADNIImageDataset(Dataset):
         if self.args.augment and self.split == "train":
             if random.random() < 0.5:
                 t = torch.flip(t, dims=[2])
-        return t.float(), int(y)
+        sid = _extract_subject_id(path)
+        return t.float(), int(y), sid
 
 def _split_items(items: List, val_ratio: float, test_ratio: float, seed: int):
     rng = random.Random(seed)
@@ -116,7 +149,7 @@ def build_loaders_adni(args: ADNIArgs):
         te_items = _list_images_under(test_root,  class_map)
         if not tr_items: raise RuntimeError(f"No images found under: {train_root}")
         if not te_items: raise RuntimeError(f"No images found under: {test_root}")
-        tr_split, va_split, _ = _split_items(tr_items, args.val_ratio, 0.0, args.seed)
+        tr_split, va_split = _split_items_by_subject(tr_items, args.val_ratio, args.seed)
         print(f"[ADNI IMAGES] train={len(tr_split)} val={len(va_split)} test={len(te_items)}")
         return (
             DataLoader(ADNIImageDataset(tr_split, args, split="train"), batch_size=args.batch_size, shuffle=True,  num_workers=args.num_workers, pin_memory=True),
@@ -135,7 +168,7 @@ def build_loaders_adni(args: ADNIArgs):
         if not sp_items: raise RuntimeError(f"No images found under: {split_root}")
         if not ot_items: raise RuntimeError(f"No images found under: {other_root}")
         if base == "train":
-            tr_split, va_split, _ = _split_items(sp_items, args.val_ratio, 0.0, args.seed)
+            tr_split, va_split = _split_items_by_subject(sp_items, args.val_ratio, args.seed)
             print(f"[ADNI IMAGES] train={len(tr_split)} val={len(va_split)} test={len(ot_items)}")
             return (
                 DataLoader(ADNIImageDataset(tr_split, args, split="train"), batch_size=args.batch_size, shuffle=True,  num_workers=args.num_workers, pin_memory=True),
@@ -143,7 +176,7 @@ def build_loaders_adni(args: ADNIArgs):
                 DataLoader(ADNIImageDataset(ot_items,  args, split="test"), batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True),
             )
         else:
-            tr_split, va_split, _ = _split_items(ot_items, args.val_ratio, 0.0, args.seed)
+            tr_split, va_split = _split_items_by_subject(ot_items, args.val_ratio, args.seed)
             print(f"[ADNI IMAGES] train={len(tr_split)} val={len(va_split)} test={len(sp_items)}")
             return (
                 DataLoader(ADNIImageDataset(tr_split, args, split="train"), batch_size=args.batch_size, shuffle=True,  num_workers=args.num_workers, pin_memory=True),
