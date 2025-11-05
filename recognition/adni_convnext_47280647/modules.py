@@ -176,19 +176,19 @@ class ConvNeXtLite(nn.Module):
 # 3) Factory & utility
 # ------------------------------
 def build_model(
+    name: str = "tiny",
     in_chans: int = 1,
     num_classes: int = 2,
     head_dropout: float = 0.0,
-    model: str = "tiny",          # "tiny" or "nextlite_tiny"
 ) -> nn.Module:
     """
     Backward-compatible factory.
-    - model="tiny"          -> TinyCNN (baseline)
-    - model="nextlite_tiny" -> ConvNeXtLite
+    - name="tiny"          -> TinyCNN (baseline)
+    - name="nextlite_tiny" -> ConvNeXtLite
     """
-    if model == "tiny":
+    if name == "tiny":
         return TinyCNN(in_chans=in_chans, num_classes=num_classes, head_dropout=head_dropout)
-    elif model == "nextlite_tiny":
+    elif name == "nextlite_tiny":
         return ConvNeXtLite(
             in_chans=in_chans,
             num_classes=num_classes,
@@ -199,7 +199,7 @@ def build_model(
             layer_scale_init=1e-6,
         )
     else:
-        raise ValueError(f"Unknown model '{model}' (use 'tiny' or 'nextlite_tiny').")
+        raise ValueError(f"Unknown model '{name}' (use 'tiny' or 'nextlite_tiny').")
 
 def count_params(model: nn.Module) -> int:
     return sum(p.numel() for p in model.parameters() if p.requires_grad)

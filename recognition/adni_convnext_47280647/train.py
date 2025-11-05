@@ -51,7 +51,7 @@ def main():
     ap.add_argument("--test_ratio", type=float, default=0.1)
     ap.add_argument("--augment", action="store_true")
     ap.add_argument("--model", type=str, default="tiny",
-                    choices=["tiny","nextlite_tiny","nextlite_small"],
+                    choices=["tiny","nextlite_tiny"],
                     help="Which model to build")
 
     args = ap.parse_args()
