@@ -77,16 +77,19 @@ class ADNIImageDataset(Dataset):
 
     def __getitem__(self, i):
         path, y = self.items[i]
-        # load grayscale and normalize to [0,1]
-        img = Image.open(path).convert("L")
-        arr = np.asarray(img, dtype=np.float32) / 255.0  # (H, W)
-        t = torch.from_numpy(arr).unsqueeze(0)           # (1, H, W)
-        # resize to model input
-        t = F.interpolate(t.unsqueeze(0), size=self.args.resize_hw, mode="bilinear", align_corners=False).squeeze(0)
-        # simple augmentation (optional)
+        with Image.open(path).convert("L") as img:
+            arr = np.asarray(img, dtype=np.float32) / 255.0  # (H, W)
+        t = torch.from_numpy(arr).unsqueeze(0)               # (1, H, W)
+        t = F.interpolate(
+            t.unsqueeze(0), size=self.args.resize_hw, mode="bilinear", align_corners=False
+        ).squeeze(0)
+
+        mean, std = 0.5, 0.25
+        t = (t - mean) / std
+
         if self.args.augment and self.split == "train":
             if random.random() < 0.5:
-                t = torch.flip(t, dims=[2])  # horizontal flip
+                t = torch.flip(t, dims=[2])
         return t.float(), int(y)
 
 def _split_items(items: List, val_ratio: float, test_ratio: float, seed: int):

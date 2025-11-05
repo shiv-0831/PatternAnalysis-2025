@@ -38,6 +38,8 @@ def main():
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--head_dropout", type=float, default=0.0)
+    ap.add_argument("--drop_path_rate", type=float, default=0.15)
+    ap.add_argument("--layer_scale_init", type=float, default=1e-6)
     ap.add_argument("--save_dir", type=str, default="results/run1")
     # data (ADNI)
     ap.add_argument("--data_root", type=str, default=None)
@@ -73,7 +75,14 @@ def main():
         augment=args.augment
     )
 
-    model = build_model(name=args.model, in_chans=1, num_classes=2, head_dropout=args.head_dropout).to(device)
+    model = build_model(
+        name=args.model,
+        in_chans=1,
+        num_classes=2,
+        head_dropout=args.head_dropout,
+        drop_path_rate=args.drop_path_rate,
+        layer_scale_init=args.layer_scale_init,
+    ).to(device)
     print(f"Model params: {count_params(model):,}")
     optim = torch.optim.Adam(model.parameters(), lr=args.lr)
     criterion = nn.CrossEntropyLoss()

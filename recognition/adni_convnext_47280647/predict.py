@@ -8,6 +8,10 @@ def main():
     ap.add_argument("--checkpoint", type=str, default="results/run1/best.pt")
     ap.add_argument("--dataset", type=str, default="random", choices=["random","adni"])
     ap.add_argument("--batch_size", type=int, default=32)
+    ap.add_argument("--model", type=str, default="tiny", choices=["tiny","nextlite_tiny"])
+    ap.add_argument("--head_dropout", type=float, default=0.0)
+    ap.add_argument("--drop_path_rate", type=float, default=0.15)
+    ap.add_argument("--layer_scale_init", type=float, default=1e-6)
     # ADNI flags (only used if dataset=adni)
     ap.add_argument("--data_root", type=str, default=None)
     ap.add_argument("--labels_csv", type=str, default=None)
@@ -34,7 +38,14 @@ def main():
     loader = te if (args.dataset == "adni" and te is not None) else va
 
     ckpt = torch.load(args.checkpoint, map_location="cpu")
-    model = build_model().to(device)
+    model = build_model(
+        name=args.model,
+        in_chans=1,
+        num_classes=2,
+        head_dropout=args.head_dropout,
+        drop_path_rate=args.drop_path_rate,
+        layer_scale_init=args.layer_scale_init,
+    ).to(device)
     model.load_state_dict(ckpt["state_dict"])
     model.eval()
 

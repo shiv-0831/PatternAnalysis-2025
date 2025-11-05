@@ -115,6 +115,7 @@ class ConvNeXtLite(nn.Module):
             nn.SiLU(),
             nn.Conv2d(dims[0]//2, dims[0], kernel_size=3, stride=2, padding=1),   # 112->56
             ChannelNorm(dims[0]),
+            nn.SiLU(),
         )
 
         # Downsample layers between stages: 2x2 stride-2 convs
@@ -166,7 +167,7 @@ class ConvNeXtLite(nn.Module):
 
     def forward(self, x: torch.Tensor):
         feats = self.forward_features(x)
-        feats = self.head_norm(feats[:, :, None, None]).squeeze(-1).squeeze(-1)  # norm in NCHW path
+        feats = self.head_norm(feats[:, :, None, None]).squeeze(-1).squeeze(-1)
         feats = self.head_drop(feats)
         logits = self.head_fc(feats)
         probs = F.softmax(logits, dim=1)
@@ -180,6 +181,8 @@ def build_model(
     in_chans: int = 1,
     num_classes: int = 2,
     head_dropout: float = 0.0,
+    drop_path_rate: float = 0.15,
+    layer_scale_init: float = 1e-6,
 ) -> nn.Module:
     """
     Backward-compatible factory.
@@ -194,9 +197,9 @@ def build_model(
             num_classes=num_classes,
             depths=[2, 4, 8, 2],
             dims=[80, 160, 320, 640],
-            drop_path_rate=0.15,
-            head_dropout=max(head_dropout, 0.2),
-            layer_scale_init=1e-6,
+            drop_path_rate=drop_path_rate,
+            head_dropout=head_dropout,
+            layer_scale_init=layer_scale_init,
         )
     else:
         raise ValueError(f"Unknown model '{name}' (use 'tiny' or 'nextlite_tiny').")
