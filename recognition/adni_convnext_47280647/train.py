@@ -50,6 +50,10 @@ def main():
     ap.add_argument("--val_ratio", type=float, default=0.1)
     ap.add_argument("--test_ratio", type=float, default=0.1)
     ap.add_argument("--augment", action="store_true")
+    ap.add_argument("--model", type=str, default="tiny",
+                    choices=["tiny","nextlite_tiny","nextlite_small"],
+                    help="Which model to build")
+
     args = ap.parse_args()
 
     set_seed(args.seed)
@@ -68,7 +72,7 @@ def main():
         augment=args.augment
     )
 
-    model = build_model(in_chans=1, num_classes=2, head_dropout=args.head_dropout).to(device)
+    model = build_model(name=args.model, in_chans=1, num_classes=2, head_dropout=args.head_dropout).to(device)
     print(f"Model params: {count_params(model):,}")
     optim = torch.optim.Adam(model.parameters(), lr=args.lr)
     criterion = nn.CrossEntropyLoss()
