@@ -58,6 +58,7 @@ def main():
 
     set_seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
     os.makedirs(args.save_dir, exist_ok=True)
     with open(os.path.join(args.save_dir, "config.json"), "w") as f:
         json.dump(vars(args), f, indent=2)
