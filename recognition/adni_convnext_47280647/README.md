@@ -220,7 +220,6 @@ scipy==1.11.4
 ```
 
 ## 12. References
-- Chandra, S. (2025). *Pattern Analysis Report Specification v1.64*. COMP3710 Teaching Material.
 - Liu, Z., Mao, H., Wu, C., Feichtenhofer, C., Darrell, T., & Xie, S. (2022). *ConvNeXt: A ConvNet for the 2020s*. CVPR. https://arxiv.org/abs/2201.03545
 - Alzheimer’s Disease Neuroimaging Initiative (ADNI). (n.d.). *ADNI MRI Collection*. https://adni.loni.usc.edu/
 - Wightman, R. (2021). *Stochastic depth and modern ConvNets in PyTorch*. TIMM GitHub. https://github.com/rwightman/pytorch-image-models
