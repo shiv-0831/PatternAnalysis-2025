@@ -15,3 +15,7 @@ checkpoints/
 data/
 datasets/
 ADNI/
+
+# logs and QOL stuff
+logs/
+COMP3710_Report_v1.64_Final.pdf
