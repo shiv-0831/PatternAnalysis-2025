@@ -34,11 +34,14 @@ Student Number: 47280647
 ---
 
 ## 1. Executive Summary
+This project tackles **binary classification of Alzheimer's Disease (abbreviated as AD) vs Cognitively Normal (abbreviated as CN)** from **ADNI MRI 2D slices** data, targeting ≥ **80%** test accuracy on a strictly **patient-wise held-out** dataset. This implementation follows a leakage-safe pipeline including grayscale conversion, 224x224 resizing, normalisation (x-0.5)/0.25, and ligt MRI-appropriate augmentation, paired with strict **subject-wise** splits to prevent data leakage (patient overlap) across training, validation, and testing set.
 
+Two models are implemented to bracket performance and guide design choices. A compact **TinyCNN** provides a clear, reproducible baseline. A **ConvNeXtLite** classifier then scales representational capacity using modern CNN components (eg., depthwise convolutions, LayerNorm, larger kernels) to better capture subtle brain textures. Training is implemented in PyTorch with **Adam**, checkpointing, seeded runs, and automatic curve exports.
 
 ## 2. Problem Definition
 
 ### 2.1 Problem Statement
+
 
 ### 2.2 Dataset Overview
 
