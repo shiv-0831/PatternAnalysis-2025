@@ -1,4 +1,4 @@
-# ADNI ConvNeXtLite Classifier – Problem 8 (COMP3710)
+# ADNI ConvNeXtLite Classifier – Problem 8
 
 Author: Shivam Garg
 Student Number: 47280647
@@ -27,29 +27,28 @@ Student Number: 47280647
     1. [Environment Setup](#101-environment-setup)  
     2. [Training Commands](#102-training-commands)  
     3. [Evaluation Commands](#103-evaluation-commands)  
-11. [Reproducibility Checklist](#11-reproducibility-checklist)  
-12. [Dependencies](#12-dependencies)  
-13. [References](#13-references)  
+11. [Dependencies](#11-dependencies)  
+12. [References](#12-references)  
 
 ---
 
 ## 1. Executive Summary
-This project tackles **binary classification of Alzheimer's Disease (abbreviated as AD) vs Cognitively Normal (abbreviated as CN)** from **ADNI MRI 2D slices** data, targeting ≥ **80%** test accuracy on a strictly **patient-wise held-out** dataset. This implementation follows a leakage-safe pipeline including grayscale conversion, 224x224 resizing, normalisation (x-0.5)/0.25, and ligt MRI-appropriate augmentation, paired with strict **subject-wise** splits to prevent data leakage (patient overlap) across training, validation, and testing set.
+This project tackles **binary classification of Alzheimer's Disease (abbreviated as AD) vs Cognitively Normal (abbreviated as CN)** from **ADNI MRI 2D slices** data, targeting ≥ **80%** test accuracy on a strictly **patient-wise held-out** dataset. This implementation follows a leakage-safe pipeline including grayscale conversion, 224×224 resizing, normalisation `(x-0.5)/0.25`, and light MRI-appropriate augmentation, paired with strict **subject-wise** splits to prevent data leakage (patient overlap) across training, validation, and testing sets.
 
-Two models are implemented to bracket performance and guide design choices. A compact **TinyCNN** provides a clear, reproducible baseline. A **ConvNeXtLite** classifier then scales representational capacity using modern CNN components (eg., depthwise convolutions, LayerNorm, larger kernels) to better capture subtle brain textures. Training is implemented in PyTorch with **Adam**, checkpointing, seeded runs, and automatic curve exports.
+Two models are implemented to bracket performance and guide design choices. A compact **TinyCNN** provides a clear, reproducible baseline. A **ConvNeXtLite** classifier then scales representational capacity using modern CNN components (e.g., depthwise convolutions, LayerNorm, larger kernels) to better capture subtle brain textures. Training is implemented in PyTorch with **Adam**, checkpointing, seeded runs, and automatic curve exports.
 
 ## 2. Problem Definition
 
 ### 2.1 Problem Statement
-The task is **binary classification** of brain MRI slices into AD (Alzheimer's Disease) and CN (Cognitively Normal). Inputs are 2D axial slices derived from the ADNI scans; the output is a single class label per slice, with patient-lavel reporting obtained by aggregating slide predictions per subject. The primary objective is ≥ 0.80 accuracy on a strict patient held out test set (to prevent data leakage).
+The task is **binary classification** of brain MRI slices into **AD (Alzheimer's Disease)** and **CN (Cognitively Normal)**. Inputs are 2D axial slices derived from the ADNI scans; the output is a single class label per slice, with patient-level reporting obtained by aggregating slice predictions per subject. The primary objective is ≥ 0.80 accuracy on a strict patient held-out test set (to prevent data leakage).
 
 ### 2.2 Dataset Overview
-The data is categorised as follows - 
-- **Souces and Classes**: The dataset is a two-class subset of ADNI with labels AD and CN. Each subjec contributes a 3D MRI volume from which 2D axial slices are extracted for training and evaluation.
-- **Data units**: Trainint operates at the slide level. Evaluation includes bnoth slice-level and patient-level (aggregated) metrics
+The data is categorised as follows:
+- **Sources and Classes**: The dataset is a two-class subset of ADNI with labels AD and CN. Each subject contributes a 3D MRI volume from which 2D axial slices are extracted for training and evaluation.
+- **Data units**: Training operates at the slice level. Evaluation includes both slice-level and patient-level (aggregated) metrics.
 
 ## 3. Methodology Overview
-The approach is an end-to-end pipeline that turn ADNI MRI 2D slices into patient-levl AD?/CN predictions while preventing data leakage and keeping runs easy to reproduce. It combined a transparent TinyCNN baseline with a stronger ConvNeXtLite classifier to bracket performance.
+The approach is an end-to-end pipeline that turns ADNI MRI 2D slices into patient-level AD/CN predictions while preventing data leakage and keeping runs easy to reproduce. It combines a transparent TinyCNN baseline with a stronger ConvNeXtLite classifier to bracket performance.
 
 ## 4. Data Pipeline
 
@@ -188,7 +187,7 @@ Slice metrics come directly from the validation loop / `predict.py` (averaged ov
     --num_workers 1 \
     --save_dir runs/rerun_lr1e-4_hd0.3_dp0.2_s42
   ```
-- Tweak `--batch_size`, `--num_workers`, and `--data_root` to match your environment; each run writes `config.json`, `best.pt`, and curves into `--save_dir`.
+- Adjust `--batch_size`, `--num_workers`, and `--data_root` to match your environment; each run writes `config.json`, `best.pt`, and curves into `--save_dir`.
 
 ### 10.3 Evaluation Commands
 - Evaluate the best run on the held-out test split:
@@ -206,15 +205,25 @@ Slice metrics come directly from the validation loop / `predict.py` (averaged ov
   ```
 - Swap the checkpoint path/flags to evaluate other configs. Output prints slice accuracy and patient accuracy (if subject IDs were returned by the loader).
 
-## 11. Reproducibility Checklist
+## 11. Dependencies
+Install the following libraries (either individually or via `pip install -r requirements.txt`), then add the appropriate PyTorch CUDA wheels manually.
 
-## 12. Dependencies
+```
+pillow==10.4.0
+numpy==1.26.4
+matplotlib==3.8.4
+tqdm==4.66.4
+scikit-learn==1.3.2
+scipy==1.11.4
+# GPU stack (choose wheel for your CUDA version)
+# pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu121
+```
 
-## 13. References
+## 12. References
+- Chandra, S. (2025). *Pattern Analysis Report Specification v1.64*. COMP3710 Teaching Material.
+- Liu, Z., Mao, H., Wu, C., Feichtenhofer, C., Darrell, T., & Xie, S. (2022). *ConvNeXt: A ConvNet for the 2020s*. CVPR. https://arxiv.org/abs/2201.03545
+- Alzheimer’s Disease Neuroimaging Initiative (ADNI). (n.d.). *ADNI MRI Collection*. https://adni.loni.usc.edu/
+- Wightman, R. (2021). *Stochastic depth and modern ConvNets in PyTorch*. TIMM GitHub. https://github.com/rwightman/pytorch-image-models
 
-## Current Implementation Notes (for reference)
-- `modules.py`: TinyCNN (baseline) and ConvNeXtLite model
-- `dataset.py`: ADNI loaders, preprocessing, augmentation, subject-wise val split; returns `(x, y, subject_id)`
-- `train.py`: training loop, validation, checkpointing (best.pt), plots
-- `predict.py`: evaluation on test (slice-level and patient-level)
-- Per-run outputs (config.json, curves, best.pt) are produced alongside training but left untracked; only the illustrative figures live in `images/`.
+## AI Declaration
+ChatGPT 5 was used to refactor and improve the flow of this document. Github Copilot and ChatGPT (gpt-5-codex) was used to fix bugs relating to data leakage and optimise data loading pipeline.
