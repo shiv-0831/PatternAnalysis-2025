@@ -41,11 +41,15 @@ Two models are implemented to bracket performance and guide design choices. A co
 ## 2. Problem Definition
 
 ### 2.1 Problem Statement
-
+The task is **binary classification** of brain MRI slices into AD (Alzheimer's Disease) and CN (Cognitively Normal). Inputs are 2D axial slices derived from the ADNI scans; the output is a single class label per slice, with patient-lavel reporting obtained by aggregating slide predictions per subject. The primary objective is ≥ 0.80 accuracy on a strict patient held out test set (to prevent data leakage).
 
 ### 2.2 Dataset Overview
+The data is categorised as follows - 
+- **Souces and Classes**: The dataset is a two-class subset of ADNI with labels AD and CN. Each subjec contributes a 3D MRI volume from which 2D axial slices are extracted for training and evaluation.
+- **Data units**: Trainint operates at the slide level. Evaluation includes bnoth slice-level and patient-level (aggregated) metrics
 
 ## 3. Methodology Overview
+The approach is an end-to-end pipeline that turn ADNI MRI 2D slices into patient-levl AD?/CN predictions while preventing data leakage and keeping runs easy to reproduce. It combined a transparent TinyCNN baseline with a stronger ConvNeXtLite classifier to bracket performance.
 
 ## 4. Data Pipeline
 
